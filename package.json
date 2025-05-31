@@ -1,0 +1,17 @@
+{
+  "name": "better-auth-security",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "test": "pnpm -r run test"
+  },
+  "devDependencies": {
+    "typescript": "^5.1.6",
+    "eslint": "^8.0.0"
+  }
+}
