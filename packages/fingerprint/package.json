@@ -1,0 +1,17 @@
+{
+	"name": "better-auth-fingerprint",
+	"version": "0.1.0",
+	"type": "module",
+	"main": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts",
+		"./client": "./src/client.js"
+	},
+	"scripts": {
+		"dev": "bun --watch src"
+	},
+	"dependencies": {
+		"better-auth": "latest",
+		"crypto": "^1.0.1"
+	}
+}
