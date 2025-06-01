@@ -14,6 +14,24 @@ The Fingerprint plugin provides advanced device fingerprinting capabilities for 
 
 ## Installation
 
+### Install the Package
+
+First, install the security plugin package:
+
+```bash
+# npm
+npm install better-auth-security
+
+# yarn
+yarn add better-auth-security
+
+# pnpm
+pnpm add better-auth-security
+
+# bun
+bun add better-auth-security
+```
+
 ### Add the Server Plugin
 
 Add the Fingerprint plugin to your auth configuration:
