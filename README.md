@@ -323,3 +323,115 @@ When creating custom modules, consider:
 2. **False Positive Rate**: Balance security with legitimate user experience
 3. **Performance**: Keep validation logic fast and efficient
 4. **Privacy**: Only collect non-personally identifiable characteristics
+
+## Important Disclaimer
+
+⚠️ **This plugin is designed for you to bring your own fingerprinting modules.**
+
+The built-in modules (screen and WebGL) are basic examples and **should not be relied upon for production security**. Effective fingerprinting requires extensive browser information that cannot be obtained from HTTP requests alone.
+
+### The Reality of Fingerprinting
+
+Fingerprinting is fundamentally about **absurdity over security**. The goal is not to create an unbreakable system, but to make bypassing your defenses so difficult and time-consuming that attackers give up and move to easier targets.
+
+Key principles:
+
+- **Layer multiple detection methods** - No single fingerprint technique is foolproof
+- **Make it economically unfeasible** - The effort to bypass should exceed the value gained
+- **Accept some false positives** - Perfect accuracy isn't the goal; raising the bar is
+- **Continuous evolution** - Attackers adapt, so your defenses must too
+
+### Building Effective Modules
+
+To create robust fingerprinting, you need modules that collect:
+
+- **Canvas fingerprinting** - Render text/graphics and hash the output
+- **Audio fingerprinting** - Analyze audio processing variations
+- **Hardware signatures** - GPU rendering differences, CPU timing
+- **Behavioral patterns** - Mouse movements, typing cadence, scroll patterns
+- **Browser inconsistencies** - Feature support mismatches, timing variations
+- **Font enumeration** - Available fonts reveal OS/browser details
+- **WebRTC signatures** - Network interfaces and media capabilities
+
+## Fingerprinting Resources
+
+Learn from the experts and existing implementations:
+
+### 📚 Essential Reading
+
+- **[CreepJS](https://github.com/abrahamjuliot/creepjs)** - Comprehensive browser fingerprinting library showcasing dozens of detection techniques
+- **[FingerprintJS](https://dev.fingerprint.com/)** - Commercial-grade fingerprinting with extensive documentation on evasion techniques
+
+### 🔬 Research & Techniques
+
+- **[Device Fingerprinting Techniques](https://pixelprivacy.com/resources/browser-fingerprinting/)** - Overview of various fingerprinting methods
+- **[Canvas Fingerprinting](https://browserleaks.com/canvas)** - Test your browser's canvas signature
+- **[WebGL Fingerprinting](https://browserleaks.com/webgl)** - Graphics-based identification techniques
+- **[Audio Fingerprinting Research](https://audiofingerprint.openwpm.com/)** - Academic research on audio-based fingerprinting
+
+### 🛠️ Implementation Examples
+
+Study these implementations to understand advanced techniques:
+
+```typescript
+// Example: Advanced canvas fingerprinting module
+const canvasModule = {
+  id: "canvas",
+  async getInfo() {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    // Render complex scene to detect rendering differences
+    ctx.textBaseline = "top";
+    ctx.font = "14px Arial";
+    ctx.fillText("Canvas fingerprint 🎨", 2, 2);
+
+    // Add geometric shapes
+    ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+    ctx.fillRect(100, 5, 80, 20);
+
+    return {
+      dataURL: canvas.toDataURL(),
+      hash: await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(canvas.toDataURL())
+      ),
+    };
+  },
+  weight: 60,
+};
+
+// Example: Behavioral timing module
+const timingModule = {
+  id: "timing",
+  async getInfo() {
+    const start = performance.now();
+
+    // CPU-intensive operation
+    let hash = 0;
+    for (let i = 0; i < 100000; i++) {
+      hash = ((hash << 5) - hash + i) & 0xffffffff;
+    }
+
+    const duration = performance.now() - start;
+
+    return {
+      cpuTiming: Math.round(duration * 1000), // Microseconds
+      performanceNow: performance.now(),
+      timeOrigin: performance.timeOrigin,
+    };
+  },
+  weight: 35,
+};
+```
+
+### 🎯 Module Development Tips
+
+1. **Study evasion techniques** - Understand how attackers bypass detection
+2. **Test across devices** - Ensure your modules work on various platforms
+3. **Monitor false positive rates** - Balance security with user experience
+4. **Use multiple data sources** - Combine hardware, software, and behavioral signals
+5. **Implement fallbacks** - Gracefully handle missing browser features
+6. **Consider privacy** - Only collect necessary, non-PII data
+
+Remember: The most effective fingerprinting combines multiple weak signals into a strong identification system. No single technique is sufficient on its own.
