@@ -330,7 +330,7 @@ The built-in modules (screen and WebGL) are basic examples and **should not be r
 
 ### The Reality of Fingerprinting
 
-Fingerprinting is fundamentally about **absurdity over security**. The goal is not to create an unbreakable system, but to make bypassing your defenses so difficult and time-consuming that attackers give up and move to easier targets.
+Fingerprinting is fundamentally about **abscurity over security**. The goal is not to create an unbreakable system, but to make bypassing your defenses so difficult and time-consuming that attackers give up and move to easier targets.
 
 Key principles:
 
