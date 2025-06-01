@@ -1,8 +1,10 @@
 import type { BetterAuthPlugin } from 'better-auth';
 import { schema } from './schema';
-import type { FingerprintPluginOptions, FingerprintRecord } from './types';
+import type { FingerprintPluginOptions, FingerprintRecord, moduleServer } from './types';
 import { createAuthEndpoint, createAuthMiddleware } from 'better-auth/plugins';
 import crypto from 'crypto';
+import defaultModules from './fingerprintModulesServer';
+
 const fullSchema = [
 	'id',
 	'fingerprintId',
@@ -11,12 +13,22 @@ const fullSchema = [
 	'lastSeenAt',
 	'ipAddresses',
 	'flagged',
-	'trusted',
+	'trustScore',
 	'users'
 ];
 
-async function defaultGetFingerprintIdServer(request: Request): Promise<string | null> {
-	const headers = request.headers;
+async function defaultGetFingerprintId(ctx: {
+	request: Request;
+	context?: {
+		checks: {
+			id: string;
+			weight?: number;
+			lying?: boolean;
+		}[];
+		trustScore: number;
+	};
+}): Promise<string | null> {
+	const headers = ctx.request.headers as Headers;
 	//generate a fingerprint ID based on the request based on headers.user-agent+cf-ipcountry
 	if (!headers) {
 		return null;
@@ -33,72 +45,120 @@ async function defaultGetFingerprintIdServer(request: Request): Promise<string |
 		.update(`${userAgent}${cfIpCountry}${secChUa}${secChUaPlatform}`)
 		.digest('hex');
 }
-async function defaultGetFingerprintIdClient(request: Request): Promise<string | null> {
-	const headers = request.headers;
-	if (!headers) return null;
-	const headerValue = headers.get('X-Sc-Ua-Rd');
-	return headerValue ? atob(headerValue) : null;
-}
-async function defaultGetFingerprintIdBoth(request: Request): Promise<string | null> {
-	return '123-123-1235';
-}
 export const fingerprint = (options: FingerprintPluginOptions = {}) => {
 	const {
-		getFingerprintIdServer = defaultGetFingerprintIdServer,
-		getFingerprintIdClient = defaultGetFingerprintIdClient,
-		getFingerprintIdBoth = defaultGetFingerprintIdBoth,
-		endpoints = ['/sign-in/email'],
-		checkType = 'server',
-		saveIpAddresses = true
+		getFingerprintId = defaultGetFingerprintId,
+		endpoints = ['/sign-in/email',],
+		saveIpAddresses = true,
 	} = options;
+	const modules = options.modules || defaultModules as moduleServer[];
 	return {
 		id: 'fingerprint',
 		schema: schema,
-		endpoints: {
-			generateFingerprint: createAuthEndpoint(
-				'/fingerprint/generate',
-				{
-					method: 'GET',
-					requireRequest: true
-				},
-				async (ctx) => {
-					const getFingerprintId =
-						checkType === 'server'
-							? getFingerprintIdServer
-							: checkType === 'client'
-								? getFingerprintIdClient
-								: getFingerprintIdBoth;
-					const fingerprint = await getFingerprintId(ctx.request);
-					return ctx.json({
-						fingerprint: fingerprint
-					});
-				}
-			)
+		init: (context) => {
+			if (modules && modules.length > 0) {
+				modules.forEach(module => {
+					if (module.init) {
+						module.init();
+					}
+				});
+			}
 		},
 		hooks: {
+			before: [
+				{
+					matcher: (context) => {
+						return endpoints?.includes(context.path) || false;
+					},
+					handler: createAuthMiddleware({}, async (ctx) => {
+						const creation = (async () => {
+							const headers = ctx.headers as Headers;
+							const request = new Request(`https://${headers.get('host')}` || '', {
+								headers: headers
+							});
+							const checkData:
+								{
+									id: string;
+									[key: string]: any;
+								}[]
+								= headers.get('X-Data') ? JSON.parse(atob(headers.get('X-Data') || '')) : null;
+
+							if (!headers || !checkData) throw ctx.error(401, { message: 'Unauthorized' });
+
+							//run the modules
+							let items: {
+								id: string;
+								weight?: number;
+								lying?: boolean;
+							}[] = [];
+							let totalWeight = modules?.reduce((acc, module) => acc + (module.weight || 0), 0) || 0;
+							if (modules && modules.length > 0) {
+								for (const module of modules) {
+									const lying = await module.isLying(checkData.find(item => item.id === module.id) ?? {});
+									if (!lying) {
+										items.push({
+											id: module.id,
+											weight: module.weight,
+											lying
+										});
+									}
+								}
+							}
+							// get the trust score based on if lying is false and get all the weights that are not lying... And then divide by the total weight
+							const trustScore = (items?.reduce((acc, module) => acc + (module.weight || 0), 0) || 0) / totalWeight;
+
+							console.log('Trust Score:', trustScore * 100, '%');
+
+							// generate fingerprint ID
+							const fingerprintId = await getFingerprintId({
+								request,
+								context: {
+									checks: items,
+									trustScore: Math.round(trustScore * 100)
+								}
+							});
+
+							// Store processed data in context for after hook
+							// @ts-ignore
+							ctx.context.fingerprintData = {
+								fingerprintId,
+								trustScore,
+								request,
+								headers
+							};
+						})()
+						options.awaited ? await creation : creation;
+					})
+
+				}
+			],
 			after: [
 				{
 					matcher: (context) => {
-						return endpoints.includes(context.path);
+						return endpoints?.includes(context.path) || false;
 					},
 					handler: createAuthMiddleware({}, async (ctx) => {
 						const context = ctx.context;
-						const headers = ctx.headers as Headers;
-						const request = new Request(`https://${headers.get('host')}` || '', {
-							headers: headers
-						});
-						const session = context?.session;
-						if (!context || !headers) throw ctx.error(401, { message: 'Unauthorized' });
-						if (!session) return;
+						let session = context?.session;
+						// @ts-ignore
+						const fingerprintData = context?.fingerprintData;
+						// get the session manually
+						if (!session) {
+							const sessionCookieToken = await ctx.getSignedCookie(
+								ctx.context.authCookies.sessionToken.name,
+								ctx.context.secret
+							);
+							if (!sessionCookieToken) {
+								return;
+							}
+							session = await ctx.context.internalAdapter.findSession(decodeURIComponent(sessionCookieToken));
+						}
 
-						// generate fingerprint ID
-						const fingerprintId =
-							checkType === 'server'
-								? await getFingerprintIdServer(request)
-								: checkType === 'client'
-									? await getFingerprintIdClient(request)
-									: await getFingerprintIdBoth(request);
+						if (!session || !fingerprintData) return;
+
+						const { fingerprintId, trustScore, headers } = fingerprintData;
 						const ipAddress = headers.get('cf-connecting-ip') || headers.get('x-real-ip') || '';
+
 						if (fingerprintId) {
 							//save the fingerprint ID to the database
 							let fingerprintRecord: FingerprintRecord | null = await ctx.context.adapter.findOne({
@@ -116,6 +176,7 @@ export const fingerprint = (options: FingerprintPluginOptions = {}) => {
 									model: 'fingerprint',
 									data: {
 										fingerprintId,
+										trustScore,
 										users: {
 											connect: session.user ? [{ id: session.user.id }] : []
 										}
@@ -135,12 +196,13 @@ export const fingerprint = (options: FingerprintPluginOptions = {}) => {
 										users: {
 											connect: session.user ? [{ id: session.user.id }] : []
 										},
+										trustScore,
 										...(saveIpAddresses
 											? {
-													ipAddresses: [...fingerprintRecord.ipAddresses, ipAddress].filter(
-														(ip, index, self) => self.indexOf(ip) === index
-													)
-												}
+												ipAddresses: [...fingerprintRecord.ipAddresses, ipAddress].filter(
+													(ip, index, self) => self.indexOf(ip) === index
+												)
+											}
 											: {}),
 										lastSeenAt: new Date(),
 										updatedAt: new Date()
@@ -167,21 +229,6 @@ export const fingerprint = (options: FingerprintPluginOptions = {}) => {
 				}
 			]
 		}
-		// middlewares: [
-		// 	{
-		// 		path: '/sign-out',
-		// 		middleware: createAuthMiddleware({}, async (ctx) => {
-		// 			const headers = ctx.headers as Headers;
-		// 			const request = new Request(`https://${headers.get('host')}` || '', {
-		// 				headers: headers
-		// 			});
-		// 			const fingerprintId = await getFingerprintId(request);
-		// 			console.log(request.headers);
-		// 			console.log(ctx.context);
-		// 			console.log('Fingerprint ID:', fingerprintId);
-		// 		})
-		// 	}
-		// ]
 	} satisfies BetterAuthPlugin;
 };
 

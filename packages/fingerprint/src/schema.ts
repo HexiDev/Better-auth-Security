@@ -26,8 +26,8 @@ export const schema = {
 				type: 'boolean',
 				required: true
 			},
-			trusted: {
-				type: 'boolean',
+			trustScore: {
+				type: 'number',
 				required: true
 			},
 			users: {

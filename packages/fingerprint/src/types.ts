@@ -1,3 +1,15 @@
+export interface moduleServer {
+	id: string;
+	isLying: (ctx: { [key: string]: string }
+	) => Promise<boolean>;
+	init?: () => Promise<void>;
+	weight?: number;
+}
+export interface moduleClient {
+	id: string;
+	getInfo: () => Promise<Record<string, any>>;
+	init?: () => Promise<void>;
+}
 export interface FingerprintPluginOptions {
 	checkType?: 'client' | 'server' | 'both';
 	/**
@@ -6,6 +18,11 @@ export interface FingerprintPluginOptions {
 	 * If `checkType` is 'client', these endpoints will be checked on the client side.
 	 */
 	endpoints?: string[];
+	/**
+	 * @default true
+	 * Whether to await the creation of the fingerprint inside the database.
+	 */
+	awaited?: boolean;
 	suspiciousThresholds?: {
 		accountsPerFingerprint?: number;
 		fingerprintsPerAccount?: number;
@@ -25,9 +42,22 @@ export interface FingerprintPluginOptions {
 	 */
 	recursiveSearchLimit?: number;
 
-	getFingerprintIdServer?: (request: Request) => Promise<string | null>;
-	getFingerprintIdClient?: (request: Request) => Promise<string | null>;
-	getFingerprintIdBoth?: (request: Request) => Promise<string | null>;
+	keys?: {
+		publicKey: string;
+		privateKey: string;
+	}
+
+	getFingerprintId?: (ctx: {
+		request: Request;
+		context?: {
+			checks: {
+				id: string;
+				weight?: number;
+				lying?: boolean;
+			}[],
+			trustScore: number;
+		};
+	}) => Promise<string | null>;
 
 	onSuspiciousLogin?: (params: {
 		fingerprintId: string;
@@ -47,6 +77,10 @@ export interface FingerprintPluginOptions {
 
 	isUserIdSuspicious?: (userId: string) => Promise<boolean>;
 	isFingerprintIdSuspicious?: (fingerprintId: string) => Promise<boolean>;
+	modules?: moduleServer[];
+}
+export interface FingerprintPluginOptionsClient {
+	modules?: moduleClient[];
 }
 
 export interface Context {
