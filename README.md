@@ -171,84 +171,155 @@ fingerprint({
 });
 ```
 
-## Fingerprint Modules
+## How Fingerprinting Works
 
-The plugin includes built-in modules for device fingerprinting:
+The fingerprint plugin uses a sophisticated module system to detect device authenticity and prevent spoofing attempts. Here's how it works:
 
-### Client-Side Modules
+### Module Architecture
 
-- **Screen Module**: Captures screen dimensions and pixel ratio
-- **WebGL Module**: Detects graphics card and renderer information
+The plugin operates with two types of modules:
 
-### Server-Side Modules
+1. **Client Modules**: Collect device characteristics in the browser
+2. **Server Modules**: Validate the collected data for inconsistencies
 
-- **Screen Validation**: Detects impossible or suspicious screen configurations
-- **WebGL Validation**: Identifies mismatched vendor/renderer combinations
+### Data Collection Process
 
-### Custom Modules
+1. **Client-Side Collection**: When a user attempts to authenticate, client modules gather device information:
 
-Create custom fingerprinting modules:
+   ```typescript
+   // Screen module collects display data
+   {
+     width: 1920,
+     height: 1080,
+     devicePixelRatio: 2,
+     availWidth: 1920,
+     availHeight: 1040
+   }
 
-**Client Module:**
+   // WebGL module captures graphics info
+   {
+     vendor: "Intel Inc.",
+     renderer: "Intel(R) UHD Graphics 620"
+   }
+   ```
 
-```typescript
-const customClientModule = {
-  id: "custom-client",
-  async getInfo() {
-    return {
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      language: navigator.language,
-    };
-  },
-};
-```
+2. **Data Transmission**: Collected data is base64-encoded and sent via the `X-Data` header
+3. **Server-Side Validation**: Server modules analyze the data for inconsistencies
 
-**Server Module:**
+### Lie Detection System
 
-```typescript
-const customServerModule = {
-  id: "custom-server",
-  async isLying(ctx) {
-    const { timezone, language } = ctx;
-    // Validate timezone/language consistency
-    return !isValidTimezoneLanguagePair(timezone, language);
-  },
-  weight: 30,
-};
-```
+Each server module implements an `isLying()` function that returns `true` if the data appears spoofed:
 
-## Database Schema
-
-The plugin automatically creates a fingerprint table with the following structure:
+#### Screen Module Detection
 
 ```typescript
-{
-    id: string;
-    fingerprintId: string;
-    createdAt: Date;
-    updatedAt: Date;
-    lastSeenAt: Date;
-    ipAddresses: string[];
-    flagged: boolean;
-    trustScore: number;
-    users: string[]; // Array of linked user IDs
+// Detects impossible screen configurations
+async isLying(ctx) {
+  const { width, height, availWidth, availHeight, devicePixelRatio } = ctx;
+
+  // Available size cannot exceed total size
+  if (availWidth > width || availHeight > height) return true;
+
+  // Suspiciously small screens
+  if (width < 300 || height < 300) return true;
+
+  // Invalid pixel ratios
+  if (devicePixelRatio < 0.5 || devicePixelRatio > 10) return true;
+
+  return false;
 }
 ```
 
-## Security Notice
+#### WebGL Module Detection
 
-This plugin implements security measures for authentication systems. Use responsibly and ensure proper configuration for your security requirements. Always test thoroughly in development environments before production deployment.
+```typescript
+// Detects mismatched vendor/renderer pairs
+async isLying(ctx) {
+  const { renderer, vendor } = ctx;
 
-### Privacy Considerations
+  // NVIDIA vendor should have NVIDIA in renderer
+  if (vendor.includes('nvidia') && !renderer.includes('nvidia')) return true;
 
-- **IP Address Storage**: Can be disabled by setting `saveIpAddresses: false`
-- **Fingerprint Data**: Only non-personally identifiable device characteristics are collected
-- **Data Retention**: Consider implementing data retention policies for compliance
+  // Intel vendor should have Intel in renderer
+  if (vendor.includes('intel') && !renderer.includes('intel')) return true;
 
-### Best Practices
+  return false;
+}
+```
 
-1. **Gradual Rollout**: Start with monitoring mode before enforcement
-2. **Threshold Tuning**: Adjust suspicious activity thresholds based on your user base
-3. **Don't outright block users**: Use flags and alerts instead of immediate blocks as the hacker can't bypass it very easily
-4. **Manual Review**: Implement human review for flagged accounts
-5. **Regular Updates**: Keep fingerprinting modules updated for new evasion techniques
+### Weight System
+
+Each module has a weight that determines its importance in the trust score calculation:
+
+```typescript
+const modules = [
+  { id: "webgl", weight: 50 }, // WebGL is harder to spoof
+  { id: "screen", weight: 40 }, // Screen data is easier to fake
+  { id: "fonts", weight: 30 }, // Font data is moderately reliable
+];
+```
+
+### Trust Score Calculation
+
+The trust score is calculated based on which modules detect lies:
+
+1. **Total Weight**: Sum of all module weights (e.g., 50 + 40 + 30 = 120)
+2. **Truthful Weight**: Sum of weights from modules that don't detect lies
+3. **Trust Score**: `(Truthful Weight / Total Weight) × 100`
+
+#### Example Calculation
+
+```typescript
+// All modules pass (no lies detected)
+trustScore = (50 + 40 + 30) / 120 × 100 = 100%
+
+// WebGL module detects lie (screen and fonts pass)
+trustScore = (40 + 30) / 120 × 100 = 58.3%
+
+// All modules detect lies
+trustScore = 0 / 120 × 100 = 0%
+```
+
+### Real-World Example
+
+```typescript
+// User with legitimate Firefox browser
+Client Data: {
+  screen: { width: 1920, height: 1080, devicePixelRatio: 1 },
+  webgl: { vendor: "Mozilla", renderer: "Mozilla -- ANGLE (Intel)" }
+}
+
+Server Analysis:
+✅ Screen: Normal desktop resolution, valid pixel ratio
+✅ WebGL: Mozilla vendor matches ANGLE renderer
+Trust Score: 100%
+
+// Automated bot with spoofed data
+Client Data: {
+  screen: { width: 1920, height: 1080, devicePixelRatio: 1 },
+  webgl: { vendor: "NVIDIA Corporation", renderer: "Intel UHD Graphics" }
+}
+
+Server Analysis:
+✅ Screen: Valid configuration
+❌ WebGL: NVIDIA vendor but Intel renderer (impossible)
+Trust Score: 40% (only screen module passed)
+```
+
+### Advanced Detection Techniques
+
+The plugin can detect various spoofing attempts:
+
+- **Headless Browsers**: Missing WebGL extensions or unusual configurations
+- **Browser Automation**: Inconsistent user agent vs. actual capabilities
+- **Virtual Machines**: Specific graphics drivers or unusual hardware combinations
+- **Proxy/VPN Detection**: IP geolocation vs. timezone/language mismatches
+
+### Module Development
+
+When creating custom modules, consider:
+
+1. **Weight Assignment**: Higher weights for harder-to-spoof characteristics
+2. **False Positive Rate**: Balance security with legitimate user experience
+3. **Performance**: Keep validation logic fast and efficient
+4. **Privacy**: Only collect non-personally identifiable characteristics
