@@ -46,7 +46,6 @@ export const auth = betterAuth({
   plugins: [
     fingerprint({
       // Optional server configuration:
-      checkType: "both", // 'client' | 'server' | 'both'
       endpoints: ["/sign-in/email", "/sign-up/email"],
       awaited: true,
       saveIpAddresses: true,
@@ -118,7 +117,6 @@ fingerprint({
 
 ### Server Options
 
-- **checkType**: Where to perform fingerprint checks. Options: `'client'`, `'server'`, `'both'`. Default: `'both'`
 - **endpoints**: Array of endpoints to monitor for suspicious activity. Default: `['/sign-in/email']`
 - **awaited**: Whether to await fingerprint creation in the database. Default: `true`
 - **saveIpAddresses**: Store IP addresses for tracking. Default: `true`
