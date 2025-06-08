@@ -74,25 +74,6 @@ export const authClient = createAuthClient({
 
 ## Security Features
 
-### Automatic Protection
-
-The plugin automatically integrates with your authentication flow to:
-
-- ✅ **Detect automated attacks** - Identifies bots and headless browsers
-- ✅ **Prevent account takeover** - Links devices to user accounts
-- ✅ **Flag suspicious activity** - Monitors unusual authentication patterns
-- ✅ **Generate trust scores** - Calculates device authenticity ratings
-- ✅ **Customizable thresholds** - Configure security sensitivity levels
-
-### Advanced Detection
-
-Built-in detection for:
-
-- **Browser spoofing** - Mismatched WebGL vendor/renderer pairs
-- **Headless browsers** - Missing extensions and unusual configurations
-- **Virtual machines** - Specific graphics drivers and hardware signatures
-- **Multiple accounts** - Same device used across many accounts
-
 ## Important Security Notice
 
 ⚠️ **This plugin requires custom fingerprinting modules for production use.**
@@ -103,20 +84,33 @@ The built-in modules (screen and WebGL) are basic examples. Effective fingerprin
 
 ## Documentation
 
-- **[📖 Fingerprint Plugin Documentation](./docs/fingerprint.md)** - Complete implementation guide
-- **[🔧 Configuration Options](./docs/fingerprint.md#configuration-options)** - Server and client setup
-- **[🛡️ How Fingerprinting Works](./docs/fingerprint.md#how-fingerprinting-works)** - Technical deep dive
-- **[📚 Fingerprinting Resources](./docs/fingerprint.md#fingerprinting-resources)** - Research and learning materials
+### 📖 Plugin Documentation
+
+- **[📱 Fingerprint Plugin](./docs/fingerprint.md)** - Advanced device fingerprinting and spoofing detection
+  - [Installation & Setup](./docs/fingerprint.md#installation)
+  - [Configuration Options](./docs/fingerprint.md#configuration-options)
+  - [How Fingerprinting Works](./docs/fingerprint.md#how-fingerprinting-works)
+  - [Building Custom Modules](./docs/fingerprint.md#building-effective-modules)
+  - [Resources & Research](./docs/fingerprint.md#fingerprinting-resources)
 
 ## Roadmap
 
 Future security features planned:
 
-- **Rate Limiting Plugin** - Advanced request throttling with suspicious pattern detection
-- **Geolocation Security** - IP-based risk assessment and impossible travel detection
-- **Session Security** - Enhanced session management with device binding
-- **Behavioral Analysis** - Mouse movement and typing pattern analysis
-- **Risk Assessment API** - Unified risk scoring across all security plugins
+### 🛡️ Core Security Plugins
+
+- **CSRF Protection Plugin** - Advanced Cross-Site Request Forgery protection with token rotation
+- **Session Security Plugin** - Enhanced session management with device binding, concurrent session limits, and session hijacking detection
+
+### 🌐 Network & Location Security
+
+- **Geolocation Security Plugin** - IP-based risk assessment, impossible travel detection, and VPN/proxy identification
+- **Network Anomaly Detection** - Monitor for unusual connection patterns, distributed attacks, and coordinated bot activity
+
+### 📊 Monitoring & Response
+
+- **Automated Incident Response** - Configurable response actions for detected threats (account lockout, admin alerts, etc.)
+- **Audit Logging Plugin** - Comprehensive security event logging
 
 ## Contributing
 
@@ -126,8 +120,6 @@ We welcome contributions! Whether you're:
 - Improving detection algorithms
 - Adding new security features
 - Reporting security vulnerabilities
-
-Please see our contributing guidelines and security policy.
 
 ## License
 
