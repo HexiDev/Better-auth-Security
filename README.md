@@ -20,7 +20,7 @@ Key capabilities:
 
 - **Device Fingerprinting**: Collects unique device characteristics for identification
 
-**More comming soon!**
+**More coming soon!**
 
 ## Quick Start
 
