@@ -1,14 +1,27 @@
 {
   "name": "better-auth-security",
-  "private": true,
   "version": "0.1.0",
-  "workspaces": [
-    "packages/*"
-  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./client": {
+      "import": "./dist/client.js",
+      "types": "./dist/client.d.ts"
+    }
+  },
   "scripts": {
-    "build": "pnpm -r run build",
-    "lint": "pnpm -r run lint",
-    "test": "pnpm -r run test"
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@types/node": "^22.15.30",
+    "better-auth": "^1.2.8",
+    "crypto": "^1.0.1",
+    "crypto-js": "^4.2.0"
   },
   "devDependencies": {
     "eslint": "^8.0.0",
