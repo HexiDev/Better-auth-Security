@@ -19,10 +19,8 @@ Advanced device fingerprinting capabilities for enhanced authentication security
 Key capabilities:
 
 - **Device Fingerprinting**: Collects unique device characteristics for identification
-- **Spoofing Detection**: Advanced lie detection system to identify fake browser data
-- **Trust Scoring**: Calculates device authenticity scores based on multiple signals
-- **Suspicious Activity Monitoring**: Tracks and flags unusual authentication patterns
-- **Custom Module System**: Extensible architecture for custom fingerprinting techniques
+
+**More comming soon!**
 
 ## Quick Start
 
