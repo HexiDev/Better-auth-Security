@@ -1,4 +1,4 @@
-# **🚧 Work in Progress - Not Ready for Production**
+## **🚧 Work in Progress - Not Ready for Production**
 
 This plugin is currently under active development and **does not yet work**. Features described in this documentation are planned but not yet (fully) implemented. Please do not yet use this.
 
