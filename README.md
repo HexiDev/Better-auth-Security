@@ -1,3 +1,9 @@
+# Better-Auth Security Plugin
+
+![Better Auth Security Banner](./assets/banner/blue2.png)
+
+A security-focused plugin for [better-auth](https://www.better-auth.com/) built with TypeScript and Bun runtime, providing enhanced authentication security features.
+
 ## **🚧 Work in Progress - Not Ready for Production**
 
 This plugin is currently under active development and **does not yet work**. Features described in this documentation are planned but not yet (fully) implemented. Please do not yet use this.
@@ -7,12 +13,6 @@ This plugin is currently under active development and **does not yet work**. Fea
 - ❌ No stable release available
 
 **Star this repo** to be notified when the first stable version is released!
-
-# Better-Auth Security Plugin
-
-![Better Auth Security Banner](./assets/banner/blue2.png)
-
-A security-focused plugin for [better-auth](https://www.better-auth.com/) built with TypeScript and Bun runtime, providing enhanced authentication security features.
 
 ## About
 
