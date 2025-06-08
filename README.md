@@ -366,6 +366,7 @@ Learn from the experts and existing implementations:
 - **[Canvas Fingerprinting](https://browserleaks.com/canvas)** - Test your browser's canvas signature
 - **[WebGL Fingerprinting](https://browserleaks.com/webgl)** - Graphics-based identification techniques
 - **[Audio Fingerprinting Research](https://audiofingerprint.openwpm.com/)** - Academic research on audio-based fingerprinting
+- **[JA4 Fingerprinting](https://blog.foxio.io/ja4+-network-fingerprinting/)** - Network-level fingerprinting using TLS JA4 hashes 
 
 ### 🎯 Module Development Tips
 
