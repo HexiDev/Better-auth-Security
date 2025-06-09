@@ -1,13 +1,30 @@
 export interface moduleServer {
+  /**
+   * Unique identifier for the module.
+   * This should be a string that uniquely identifies the module.
+   * This is used also for inside the server side to link 2 modules together.
+   */
   id: string;
+  /**
+   * Optional group name for the module. So you can group modules together.
+   * This can be useful if modules are related or belong to the same category.
+   */
+  group?: string;
   isLying: (ctx: { [key: string]: string }) => Promise<boolean>;
   init?: () => Promise<void>;
+  /**
+   * @default (ctx) => Object.entries(ctx).reduce((acc, [k, v]) => acc + k + v, "")
+   * Optional method to format the information returned by `getInfo`.
+   * If provided, it will be used to format the output of the module.
+   */
+  getFormattedInfo?: (
+    ctx: Awaited<ReturnType<moduleClient["getInfo"]>>
+  ) => string;
   weight?: number;
-  group?: string;
 }
 export interface moduleClient {
   id: string;
-  getInfo: () => Promise<Record<string, any>>;
+  getInfo: () => Promise<Record<string, string> | {}>;
   init?: () => Promise<void>;
 }
 export interface FingerprintPluginOptions {

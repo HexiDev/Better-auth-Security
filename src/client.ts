@@ -50,6 +50,7 @@ export const fingerprintClient = (
   }
   return {
     id: "fingerprint",
+    // @ts-ignore
     $InferServerPlugin: {} as ReturnType<typeof fingerprint>,
     pathMethods: {
       "/my-plugin/hello-world": "GET",
