@@ -58,6 +58,7 @@ export const fingerprint = (options: FingerprintPluginOptions = {}) => {
   const modules = options.modules || (defaultModules as moduleServer[]);
   return {
     id: "fingerprint",
+    // @ts-ignore Type json is not implemented into all adapters so its not in the type system
     schema: schema,
     init: (context) => {
       if (modules && modules.length > 0) {

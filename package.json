@@ -15,7 +15,8 @@
     }
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "watch": "tsc --watch"
   },
   "dependencies": {
     "@types/node": "^22.15.30",

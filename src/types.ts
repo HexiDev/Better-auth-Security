@@ -3,7 +3,7 @@ export interface moduleServer {
   isLying: (ctx: { [key: string]: string }) => Promise<boolean>;
   init?: () => Promise<void>;
   weight?: number;
-  group: string;
+  group?: string;
 }
 export interface moduleClient {
   id: string;
@@ -23,11 +23,6 @@ export interface FingerprintPluginOptions {
    * Whether to await the creation of the fingerprint inside the database.
    */
   awaited?: boolean;
-  suspiciousThresholds?: {
-    accountsPerFingerprint?: number;
-    fingerprintsPerAccount?: number;
-    [key: string]: any;
-  };
   /**
    * @default true
    * Whether to save IP addresses in the fingerprint records.
